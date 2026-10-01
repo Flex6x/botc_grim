@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clocktower Grimoire & Assistent</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        townsfolk: { light: '#166534', DEFAULT: '#22c55e', dark: '#14532d', border: '#15803d', text: '#bbf7d0' },
+                        outsider: { light: '#075985', DEFAULT: '#38bdf8', dark: '#0c4a6e', border: '#0284c7', text: '#bae6fd' },
+                        minion: { light: '#9f1239', DEFAULT: '#fb7185', dark: '#881337', border: '#e11d48', text: '#fecdd3' },
+                        demon: { light: '#6b21a8', DEFAULT: '#c084fc', dark: '#581c87', border: '#9333ea', text: '#f3e8ff' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #090d16; color: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold text-lg shadow-sm">
+                    <i class="fa-solid fa-stopwatch"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-100 text-base leading-tight">Clocktower Assistent</h1>
+                    <p class="text-xs text-slate-400 font-medium" id="header-script-name">Trouble Brewing</p>
+                </div>
+            </div>
+
+            <!-- IN-GAME TOP TABS (Nur sichtbar im Spiel) -->
+            <nav id="ingame-nav" class="hidden flex items-center space-x-1 sm:space-x-2">
+                <button onclick="switchTab('grimoire')" id="tab-btn-grimoire" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors bg-amber-500 text-slate-950">
+                    <i class="fa-solid fa-chess-board mr-1.5"></i>Grimoire
+                </button>
+                <button onclick="switchTab('mygame')" id="tab-btn-mygame" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-800">
+                    <i class="fa-solid fa-user-shield mr-1.5"></i>Mein Spiel
+                </button>
+                <button onclick="switchTab('hypotheses')" id="tab-btn-hypotheses" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-800">
+                    <i class="fa-solid fa-brain mr-1.5"></i>Weltenbau
+                </button>
+                <button onclick="switchTab('roles')" id="tab-btn-roles" class="px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-800">
+                    <i class="fa-solid fa-book-open mr-1.5"></i>Rollen
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-2">
+                <button id="btn-leave-game" onclick="leaveGameToMainMenu()" class="hidden text-xs sm:text-sm px-3 py-1.5 border border-slate-700 font-medium rounded-lg text-slate-300 hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-house mr-1"></i> Hauptmenü
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER FOR CONTENT -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ==================== HAUPTMENÜVIEW ==================== -->
+        <section id="view-main-menu" class="space-y-8">
+            <!-- Hero Banner -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 text-center md:text-left">
+                    <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-full border border-amber-500/20">Social Deduction Begleiter</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">Blood on the Clocktower</h2>
+                    <p class="text-sm text-slate-400 max-w-xl">
+                        Dein persönliches Grimoire, Notizbuch und Logik-Assistent. Verfolge Claims, verwalte Bluffs, baue Szenarien und löse das Rätsel der Nacht.
+                    </p>
+                    <div class="pt-2">
+                        <button onclick="openSetupModal()" class="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/10 transition flex items-center justify-center space-x-2 mx-auto md:mx-0">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Neues Spiel starten</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="active-game-banner" class="hidden w-full md:w-auto bg-slate-950/80 text-white p-5 rounded-xl shadow-md border border-amber-500/30 text-center space-y-3">
+                    <div class="text-xs text-amber-400 font-bold uppercase tracking-wider">Laufende Runde</div>
+                    <div id="active-game-info" class="text-sm font-medium text-slate-300">Trouble Brewing • 8 Spieler</div>
+                    <button onclick="resumeCurrentGame()" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase rounded-lg transition">
+                        Spiel fortsetzen <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Historie Vergangener Spiele -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-slate-100 flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left mr-2 text-slate-400"></i>Gespielte Runden
+                    </h3>
+                </div>
+                <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic history items -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SPIEL-TABS (IN-GAME) ==================== -->
+
+        <!-- TAB 1: GRIMOIRE -->
+        <section id="view-grimoire" class="hidden space-y-6">
+            <!-- Toolbar oben -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <button onclick="openAddInfoModal()" class="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-lg shadow-sm transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Neue Information hinzufügen</span>
+                    </button>
+                </div>
+                <!-- View Switcher (Kreis / Tabelle) -->
+                <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 w-full sm:w-auto justify-center">
+                    <button id="btn-view-table" onclick="setGrimoireView('table')" class="px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-100 bg-slate-800 shadow-sm">
+                        <i class="fa-solid fa-table-list mr-1.5"></i>Tabelle
+                    </button>
+                    <button id="btn-view-circle" onclick="setGrimoireView('circle')" class="px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-circle-nodes mr-1.5"></i>Sitzkreis
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABELLENANSICHT -->
+            <div id="grimoire-table-wrapper" class="bg-slate-900 border border-slate-800 rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px] tracking-wider">
+                                <th class="p-3 text-center w-12">Pos</th>
+                                <th class="p-3 min-w-[120px]">Spieler</th>
+                                <th class="p-3 min-w-[180px]">Behauptungen (Claims)</th>
+                                <th class="p-3 min-w-[140px]">Vermutete Rolle</th>
+                                <th class="p-3 min-w-[130px]">Status / Tod</th>
+                                <th class="p-3 min-w-[180px]">Nacht-Infos / Fähigkeiten</th>
+                                <th class="p-3 min-w-[160px]">Notizen</th>
+                                <th class="p-3 text-right w-16">Aktion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grimoire-table-body" class="divide-y divide-slate-800/60">
+                            <!-- Rows dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SITZKREIS-ANSICHT -->
+            <div id="grimoire-circle-wrapper" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm min-h-[500px] flex items-center justify-center relative overflow-hidden">
+                <div id="circle-container" class="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] flex items-center justify-center">
+                    <!-- Dynamic seats -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: MEIN SPIEL (PERSÖNLICHES DASHBOARD) -->
+        <section id="view-mygame" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Meine Rolle & Grunddaten -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                    <h3 class="font-bold text-slate-100 border-b border-slate-800 pb-2 flex items-center">
+                        <i class="fa-solid fa-id-card text-amber-400 mr-2"></i>Meine Identität
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Meine tatsächliche Rolle</label>
+                            <select id="my-actual-role-select" onchange="updateMyGameData()" class="w-full text-xs sm:text-sm p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <!-- Options dynamic -->
+                            </select>
+                        </div>
+                        <div id="my-role-card-preview" class="p-3 rounded-lg border text-xs space-y-1">
+                            <!-- Role detail preview -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dämonen / Böse Bluffs (falls Böse oder zum Planen) -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                    <h3 class="font-bold text-slate-100 border-b border-slate-800 pb-2 flex items-center">
+                        <i class="fa-solid fa-masks-theater text-purple-400 mr-2"></i>Meine Bluffs / Cover-Stories
+                    </h3>
+                    <p class="text-xs text-slate-400">Verwalte bis zu 3 Rollen, die du gegenüber dem Dorf vorgibst.</p>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400">Bluff 1</label>
+                            <select id="my-bluff-1" onchange="updateMyGameData()" class="w-full text-xs p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                                <!-- dynamic -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400">Bluff 2</label>
+                            <select id="my-bluff-2" onchange="updateMyGameData()" class="w-full text-xs p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                                <!-- dynamic -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400">Bluff 3</label>
+                            <select id="my-bluff-3" onchange="updateMyGameData()" class="w-full text-xs p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                                <!-- dynamic -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategie & Notizen -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4 md:col-span-1">
+                    <h3 class="font-bold text-slate-100 border-b border-slate-800 pb-2 flex items-center">
+                        <i class="fa-solid fa-lightbulb text-amber-400 mr-2"></i>Eigene Gedankengänge
+                    </h3>
+                    <textarea id="my-strategy-notes" oninput="updateMyGameData()" rows="6" placeholder="Notiere deine Vermutungen, verdächtiges Verhalten oder Pläne für den nächsten Tag..." class="w-full p-2.5 text-xs sm:text-sm bg-slate-950 text-slate-100 border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Historie eigener Fähigkeiten-Ergebnisse -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h3 class="font-bold text-slate-100 flex items-center">
+                        <i class="fa-solid fa-moon text-indigo-400 mr-2"></i>Erhaltene Informationen nach Nächten
+                    </h3>
+                    <button onclick="addNightInfoEntry()" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-md border border-slate-700">
+                        + Nacht-Eintrag
+                    </button>
+                </div>
+                <div id="my-night-infos-list" class="space-y-3">
+                    <!-- dynamic list of night infos -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: WELTENBAU & LOGIK-ASSISTENT -->
+        <section id="view-hypotheses" class="hidden space-y-6">
+            <!-- Top Summary / Logik-Assistent -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Conflict Finder -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+                    <h3 class="font-bold text-slate-100 flex items-center text-sm border-b border-slate-800 pb-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500 mr-2"></i>Automatischer Konflikt-Finder
+                    </h3>
+                    <div id="conflict-list" class="space-y-2 text-xs">
+                        <!-- Dynamic list of conflicts -->
+                    </div>
+                </div>
+
+                <!-- Cadence Check (Soll / Ist Verteilung) -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+                    <h3 class="font-bold text-slate-100 flex items-center text-sm border-b border-slate-800 pb-2">
+                        <i class="fa-solid fa-chart-pie text-sky-400 mr-2"></i>Kadenz-Check (Rollen-Verteilung)
+                    </h3>
+                    <div id="cadence-check-container" class="grid grid-cols-2 gap-3 text-xs">
+                        <!-- Dynamic cadence checks -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hypothesen & Mögliche Welten -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-base">"Mögliche Welten" / Szenarien-Manager</h3>
+                        <p class="text-xs text-slate-400">Erstelle Hypothesen über Dämonen und Gesinnungen, um verschiedene Theorien zu vergleichen.</p>
+                    </div>
+                    <button onclick="createNewWorld()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg shadow-sm">
+                        <i class="fa-solid fa-plus mr-1"></i> Neue Welt
+                    </button>
+                </div>
+
+                <div id="worlds-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic worlds -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: ROLLEN-REFERENZLEISTE -->
+        <section id="view-roles" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-lg">Skript Rollenübersicht</h3>
+                        <p class="text-xs text-slate-400">Rollen und verfügbare Fähigkeitstexte des ausgewählten Skripts.</p>
+                    </div>
+                    <!-- Quick Filter Buttons -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button onclick="filterRoles('all')" class="px-2.5 py-1 text-xs font-medium rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700">Alle</button>
+                        <button onclick="filterRoles('townsfolk')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800">Bürger</button>
+                        <button onclick="filterRoles('outsider')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-sky-950 text-sky-300 border border-sky-800">Außenseiter</button>
+                        <button onclick="filterRoles('minion')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-rose-950 text-rose-300 border border-rose-800">Schergen</button>
+                        <button onclick="filterRoles('demon')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-purple-950 text-purple-300 border border-purple-800">Dämon</button>
+                    </div>
+                </div>
+
+                <!-- Roles Grid -->
+                <div id="roles-reference-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Role Cards -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- SETUP MODAL (NEUES SPIEL) -->
+    <div id="modal-setup" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-lg">Neues Spiel aufsetzen</h3>
+                <button onclick="closeModal('modal-setup')" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Skript</label>
+                    <select id="setup-script" onchange="renderRolesReference('all')" class="w-full text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100 font-medium">
+                        <option value="Trouble Brewing">Trouble Brewing (Standard)</option>
+                        <option value="A New Beginning">A New Beginning (Mark von Stoch)</option>
+                        <option value="Everyone Can Play">Everyone Can Play (Ben Burns)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Anzahl Mitspieler (ohne dich)</label>
+                    <input type="number" id="setup-player-count" min="5" max="15" value="7" onchange="generateSeatInputs()" class="w-full text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100 font-medium">
+                    <p class="text-[11px] text-slate-400 mt-1">Insgesamt <span id="total-players-label">8</span> Spieler inklusive dir selbst.</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-300">Sitzordnung im Uhrzeigersinn</label>
+                    <p class="text-xs text-amber-300 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
+                        <i class="fa-solid fa-circle-info mr-1 text-amber-400"></i>
+                        Position 0 bist Du selbst. Trage die Namen der Mitspieler beginnend mit der Person <strong>links von dir</strong> im Uhrzeigersinn ein.
+                    </p>
+
+                    <div class="space-y-2 pt-1" id="setup-names-container">
+                        <!-- Dynamic Inputs -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end space-x-2 border-t border-slate-800">
+                <button onclick="closeModal('modal-setup')" class="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold rounded-lg">Abbrechen</button>
+                <button onclick="startNewGame()" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow-sm">Spiel starten</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCHNELL-EINGABE MODAL (+ Neue Information) -->
+    <div id="modal-add-info" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-base">Information hinzufügen</h3>
+                <button onclick="closeModal('modal-add-info')" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">1. Spieler wählen</label>
+                    <select id="info-target-player" class="w-full text-xs sm:text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                        <!-- dynamic options -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">2. Art der Information</label>
+                    <select id="info-category" onchange="toggleInfoCategoryFields()" class="w-full text-xs sm:text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                        <option value="claim">Claims verwalten (Rollen behauptet - Multi-Select)</option>
+                        <option value="suspected">Vermutete echte Rolle eintragen</option>
+                        <option value="status">Status / Tod aktualisieren</option>
+                        <option value="ability">Fähigkeits-Info / Nacht-Ergebnis</option>
+                        <option value="note">Allgemeine Notiz</option>
+                    </select>
+                </div>
+
+                <!-- KATEGORIE SPECIFIC FIELDS -->
+                <div id="field-group-claim" class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Ausgewählte Claims für diesen Spieler:</label>
+                    <div id="claim-checkboxes-container" class="max-h-48 overflow-y-auto p-2 bg-slate-950 border border-slate-800 rounded-lg space-y-1.5 custom-scrollbar">
+                        <!-- Checkboxes dynamic populated -->
+                    </div>
+                </div>
+
+                <div id="field-group-suspected" class="space-y-2 hidden">
+                    <label class="block text-xs font-semibold text-slate-300">Vermutete Rolle</label>
+                    <select id="info-suspected-role" class="w-full text-xs sm:text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                        <!-- dynamic options -->
+                    </select>
+                </div>
+
+                <div id="field-group-status" class="space-y-3 hidden">
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="status-alive" value="alive" checked onchange="toggleDeathDetails()" class="text-amber-500 focus:ring-amber-500">
+                            <span class="ml-2 text-xs font-semibold text-emerald-400">Lebendig</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="status-alive" value="dead" onchange="toggleDeathDetails()" class="text-amber-500 focus:ring-amber-500">
+                            <span class="ml-2 text-xs font-semibold text-rose-400">Gestorben</span>
+                        </label>
+                    </div>
+
+                    <div id="death-details-box" class="space-y-2 pt-2 border-t border-slate-800 hidden">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Todeszeitpunkt</label>
+                            <select id="info-death-time" class="w-full text-xs p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                                <option value="Nacht 1">Nacht 1</option>
+                                <option value="Tag 1">Tag 1</option>
+                                <option value="Nacht 2">Nacht 2</option>
+                                <option value="Tag 2">Tag 2</option>
+                                <option value="Nacht 3">Nacht 3</option>
+                                <option value="Tag 3">Tag 3</option>
+                                <option value="Nacht 4">Nacht 4</option>
+                                <option value="Tag 4">Tag 4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Todesart</label>
+                            <select id="info-death-reason" class="w-full text-xs p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100">
+                                <option value="Hinrichtung">Hinrichtung (Tag)</option>
+                                <option value="Dämonen-Mord">Dämonen-Mord (Nacht)</option>
+                                <option value="Fähigkeit/Spezial">Fähigkeit / Spezial-Tod</option>
+                            </select>
+                        </div>
+                        <div class="pt-1">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" id="info-ghost-vote" checked class="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500">
+                                <span class="ml-2 text-xs text-slate-300">Toten-Stimmstein noch verfügbar</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="field-group-text" class="space-y-2 hidden">
+                    <label class="block text-xs font-semibold text-slate-300">Text / Information</label>
+                    <textarea id="info-text-input" rows="3" placeholder="Z. B. Info Nacht 1: Spieler 3 oder 4 ist Scherge..." class="w-full p-2.5 text-xs bg-slate-950 text-slate-100 border border-slate-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end space-x-2 border-t border-slate-800">
+                <button onclick="closeModal('modal-add-info')" class="px-4 py-2 border border-slate-700 text-slate-300 text-xs font-semibold rounded-lg">Abbrechen</button>
+                <button onclick="saveInformation()" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow-sm">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL MODAL FOR HISTORIE -->
+    <div id="modal-history-detail" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-base" id="history-detail-title">Spiel-Details</h3>
+                <button onclick="closeModal('modal-history-detail')" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="history-detail-content" class="space-y-3 text-xs text-slate-300">
+                <!-- dynamic details -->
+            </div>
+            <div class="pt-2 flex justify-end border-t border-slate-800">
+                <button onclick="closeModal('modal-history-detail')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        /* ==================== 1. SKRIPT & ROLLEN DATENBANK (Trouble Brewing Official) ==================== */
+        const TROUBLE_BREWING = [
+            // BÜRGER (Townsfolk)
+            { id: 'waschweib', name: 'Waschweib', team: 'townsfolk', ability: 'Du weißt zu Beginn, dass 1 von 2 Spielern ein bestimmter Bürger ist.' },
+            { id: 'bibliothekar', name: 'Bibliothekar', team: 'townsfolk', ability: 'Du weißt zu Beginn, dass 1 von 2 Spielern ein bestimmter Außenseiter ist. (Oder dass keine mitspielen.)' },
+            { id: 'detektiv', name: 'Detektiv', team: 'townsfolk', ability: 'Du weißt zu Beginn, dass 1 von 2 Spielern ein bestimmter Scherge ist.' },
+            { id: 'koch', name: 'Koch', team: 'townsfolk', ability: 'Du weißt zu Beginn, wie viele direkt benachbarte Paare BÖSER Spieler es gibt.' },
+            { id: 'empath', name: 'Empath', team: 'townsfolk', ability: 'Jede Nacht erfährst du, wie viele deiner 2 lebendigen Nachbarn BÖSE sind.' },
+            { id: 'wahrsagerin', name: 'Wahrsagerin', team: 'townsfolk', ability: 'Wähle jede Nacht 2 Spieler: Du erfährst, ob 1 davon der Dämon ist. Es gibt 1 GUTEN Spieler, der dir als Dämon erscheint.' },
+            { id: 'soldat', name: 'Soldat', team: 'townsfolk', ability: 'Du bist sicher vor dem Dämon.' },
+            { id: 'totengraeber', name: 'Totengräber', team: 'townsfolk', ability: 'Jede Nacht* erfährst du, welcher Charakter heute durch Hinrichtung gestorben ist.' },
+            { id: 'moench', name: 'Mönch', team: 'townsfolk', ability: 'Wähle jede Nacht* 1 Spieler (nicht dich selbst). Er ist heute Nacht sicher vor dem Dämon.' },
+            { id: 'rabenhueter', name: 'Rabenhüter', team: 'townsfolk', ability: 'Falls du während der Nacht stirbst, wirst du aufgeweckt & wählst 1 Spieler. Du erfährst seinen Charakter.' },
+            { id: 'jungfrau', name: 'Jungfrau', team: 'townsfolk', ability: 'Wenn du zum 1. Mal nominiert wirst, falls der Nominierende ein Bürger ist, wird er sofort hingerichtet.' },
+            { id: 'daemonenjaeger', name: 'Dämonenjäger', team: 'townsfolk', ability: 'Einmal im Spiel, während des Tages, wähle öffentlich 1 Spieler. Falls er der Dämon ist, stirbt er.' },
+            { id: 'buergermeister', name: 'Bürgermeister', team: 'townsfolk', ability: 'Falls nur noch 3 Spieler leben & es keine Hinrichtung gibt, gewinnt dein Team. Falls du in der Nacht stirbst, könnte stattdessen ein anderer Spieler sterben.' },
+
+            // AUSSENSEITER (Outsiders)
+            { id: 'butler', name: 'Butler', team: 'outsider', ability: 'Wähle jede Nacht 1 Spieler (nicht dich selbst): Morgen darfst du nur dann abstimmen, wenn er auch abstimmt.' },
+            { id: 'heilige', name: 'Heilige', team: 'outsider', ability: 'Falls du hingerichtet wirst, verliert dein Team.' },
+            { id: 'einsiedler', name: 'Einsiedler', team: 'outsider', ability: 'Du erscheinst möglicherweise als BÖSE & als Scherge oder Dämon, sogar wenn du tot bist.' },
+            { id: 'trunkenbold', name: 'Trunkenbold', team: 'outsider', ability: 'Du weißt nicht, dass du der Trunkenbold bist. Du glaubst, dass du ein Bürger-Charakter bist, aber das stimmt nicht.' },
+
+            // SCHERGEN (Minions)
+            { id: 'giftmischer', name: 'Giftmischer', team: 'minion', ability: 'Wähle jede Nacht 1 Spieler: Er ist in dieser Nacht und am folgenden Tag vergiftet.' },
+            { id: 'baron', name: 'Baron', team: 'minion', ability: 'Es sind zusätzliche Außenseiter im Spiel. [+2 Außenseiter]' },
+            { id: 'scharlachrote_frau', name: 'Scharlachrote Frau', team: 'minion', ability: 'Falls 5 oder mehr Spieler lebendig sind & der Dämon stirbt, wirst du zum Dämon. (Reisende zählen nicht.)' },
+            { id: 'spion', name: 'Spion', team: 'minion', ability: 'Jede Nacht siehst du das Grimoire. Du erscheinst möglicherweise als GUT & als Bürger oder Außenseiter, sogar wenn du tot bist.' },
+
+            // DÄMONEN (Demons)
+            { id: 'imp', name: 'Imp', team: 'demon', ability: 'Wähle jede Nacht* 1 Spieler: Er stirbt. Falls du dich damit selbst tötest, wird ein Scherge zum Imp.' }
+        ];
+
+        function createScriptRoles(roleGroups) {
+            return Object.entries(roleGroups).flatMap(([team, names]) => names.map(name =>
+                TROUBLE_BREWING.find(role => role.name === name) || {
+                    id: name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+                    name,
+                    team,
+                    ability: ''
+                }
+            ));
+        }
+
+        const SCRIPT_ROLES = {
+            'Trouble Brewing': TROUBLE_BREWING,
+            'A New Beginning': createScriptRoles({
+                townsfolk: ['Koch', 'Waschweib', 'Großmutter', 'Bibliothekar', 'Empath', 'Wahrsagerin', 'Träumer', 'Totengräber', 'Mönch', 'Schneiderin', 'Künstler', 'Rabenhüter', 'Narr'],
+                outsider: ['Schläger', 'Trunkenbold', 'Einsiedler', 'Liebchen'],
+                minion: ['Pate', 'Giftmischer', 'Hexe', 'Scharlachrote Frau'],
+                demon: ['Imp']
+            }),
+            'Everyone Can Play': createScriptRoles({
+                townsfolk: ['Bibliothekar', 'Uhrmacher', 'Großmutter', 'Wahrsagerin', 'Empath', 'Mönch', 'Totengräber', 'Glücksspieler', 'Künstler', 'Dämonenjäger', 'Narr', 'Rabenhüter', 'Bürgermeister'],
+                outsider: ['Trunkenbold', 'Einsiedler', 'Heilige', 'Mondkind'],
+                minion: ['Baron', 'Giftmischer', 'Meuchelmörder', 'Teufelsadvokat', 'Spion', 'Scharlachrote Frau'],
+                demon: ['Imp']
+            })
+        };
+
+        function getScriptRoles(scriptName = state.activeGame?.script || document.getElementById('setup-script')?.value) {
+            return SCRIPT_ROLES[scriptName] || TROUBLE_BREWING;
+        }
+
+        // Cadence Table (Official BotC setup ratios)
+        const CADENCE_TABLE = {
+            5: { townsfolk: 3, outsider: 0, minion: 1, demon: 1 },
+            6: { townsfolk: 3, outsider: 1, minion: 1, demon: 1 },
+            7: { townsfolk: 5, outsider: 0, minion: 1, demon: 1 },
+            8: { townsfolk: 5, outsider: 1, minion: 1, demon: 1 },
+            9: { townsfolk: 5, outsider: 2, minion: 1, demon: 1 },
+            10: { townsfolk: 7, outsider: 0, minion: 2, demon: 1 },
+            11: { townsfolk: 7, outsider: 1, minion: 2, demon: 1 },
+            12: { townsfolk: 7, outsider: 2, minion: 2, demon: 1 },
+            13: { townsfolk: 9, outsider: 0, minion: 3, demon: 1 },
+            14: { townsfolk: 9, outsider: 1, minion: 3, demon: 1 },
+            15: { townsfolk: 9, outsider: 2, minion: 3, demon: 1 }
+        };
+
+        /* ==================== 2. APPLICATION STATE ==================== */
+        let state = {
+            activeGame: null, // Current active game object
+            history: [],      // Saved games
+            viewMode: 'table' // 'table' or 'circle'
+        };
+
+        /* ==================== 3. INITIALIZATION & STORAGE ==================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            renderMainMenu();
+            setupFormPopulators();
+            renderRolesReference('all');
+        });
+
+        function saveToStorage() {
+            localStorage.setItem('botc_assistant_state', JSON.stringify(state));
+        }
+
+        function loadFromStorage() {
+            const stored = localStorage.getItem('botc_assistant_state');
+            if (stored) {
+                try {
+                    state = JSON.parse(stored);
+                } catch(e) {
+                    console.error("Storage error:", e);
+                }
+            }
+        }
+
+        /* ==================== 4. COLOR HELPER FUNCTIONS ==================== */
+        function getRoleTeam(roleName) {
+            const role = Object.values(SCRIPT_ROLES).flat().find(r => r.name.toLowerCase() === roleName.toLowerCase());
+            return role ? role.team : 'townsfolk';
+        }
+
+        function getTeamBadgeStyle(team) {
+            switch(team) {
+                case 'townsfolk': return 'bg-emerald-950/80 text-emerald-300 border-emerald-800';
+                case 'outsider':  return 'bg-sky-950/80 text-sky-300 border-sky-800';
+                case 'minion':    return 'bg-rose-950/80 text-rose-300 border-rose-800';
+                case 'demon':     return 'bg-purple-950/80 text-purple-300 border-purple-800';
+                default:          return 'bg-slate-800 text-slate-300 border-slate-700';
+            }
+        }
+
+        function getRoleBadge(roleName) {
+            if (!roleName) return '';
+            const team = getRoleTeam(roleName);
+            const style = getTeamBadgeStyle(team);
+            return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${style}">${roleName}</span>`;
+        }
+
+        /* ==================== 5. NAVIGATION & VIEW SWITCHING ==================== */
+        function showView(viewId) {
+            ['view-main-menu', 'view-grimoire', 'view-mygame', 'view-hypotheses', 'view-roles'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+
+            const target = document.getElementById(viewId);
+            if (target) target.classList.remove('hidden');
+
+            const ingameNav = document.getElementById('ingame-nav');
+            const leaveBtn = document.getElementById('btn-leave-game');
+
+            if (viewId === 'view-main-menu') {
+                ingameNav.classList.add('hidden');
+                leaveBtn.classList.add('hidden');
+            } else {
+                ingameNav.classList.remove('hidden');
+                leaveBtn.classList.remove('hidden');
+            }
+        }
+
+        function switchTab(tabKey) {
+            if (!state.activeGame) return;
+            document.getElementById('header-script-name').textContent = state.activeGame.script;
+
+            ['grimoire', 'mygame', 'hypotheses', 'roles'].forEach(key => {
+                const btn = document.getElementById(`tab-btn-${key}`);
+                if (btn) {
+                    if (key === tabKey) {
+                        btn.className = "px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors bg-amber-500 text-slate-950 shadow-sm";
+                    } else {
+                        btn.className = "px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors text-slate-300 hover:bg-slate-800";
+                    }
+                }
+            });
+
+            if (tabKey === 'grimoire') {
+                showView('view-grimoire');
+                renderGrimoire();
+            } else if (tabKey === 'mygame') {
+                showView('view-mygame');
+                renderMyGameTab();
+            } else if (tabKey === 'hypotheses') {
+                showView('view-hypotheses');
+                renderHypothesesTab();
+            } else if (tabKey === 'roles') {
+                showView('view-roles');
+                renderRolesReference('all');
+            }
+        }
+
+        function leaveGameToMainMenu() {
+            showView('view-main-menu');
+            renderMainMenu();
+        }
+
+        function resumeCurrentGame() {
+            if (state.activeGame) {
+                switchTab('grimoire');
+            }
+        }
+
+        /* ==================== 6. MAIN MENU & HISTORY ==================== */
+        function renderMainMenu() {
+            const activeBanner = document.getElementById('active-game-banner');
+            const activeInfo = document.getElementById('active-game-info');
+            document.getElementById('header-script-name').textContent = state.activeGame?.script || 'Trouble Brewing';
+
+            if (state.activeGame) {
+                activeBanner.classList.remove('hidden');
+                activeInfo.textContent = `${state.activeGame.script} • ${state.activeGame.players.length} Spieler (${new Date(state.activeGame.date).toLocaleDateString('de-DE')})`;
+            } else {
+                activeBanner.classList.add('hidden');
+            }
+
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+
+            if (state.history.length === 0) {
+                historyList.innerHTML = `
+                    <div class="col-span-full p-8 text-center bg-slate-900 rounded-xl border border-slate-800 text-slate-500 text-xs">
+                        Noch keine gespeicherten Runden vorhanden.
+                    </div>
+                `;
+                return;
+            }
+
+            state.history.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition space-y-3 flex flex-col justify-between";
+                
+                const formattedDate = new Date(game.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">${game.script}</span>
+                            <span class="text-[11px] text-slate-500">${formattedDate}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-100 text-sm">${game.players.length} Spieler Runde</h4>
+                        <p class="text-xs text-slate-400 line-clamp-2">${game.myGameData?.strategyNotes || 'Keine Notizen erfasst.'}</p>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                        <button onclick="openHistoryDetail(${index})" class="text-xs font-semibold text-slate-300 hover:text-slate-100">
+                            Details ansehen <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                        </button>
+                        <button onclick="deleteHistoryGame(${index})" class="text-xs text-rose-400 hover:text-rose-300 p-1" title="Runde löschen">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                historyList.appendChild(card);
+            });
+        }
+
+        function deleteHistoryGame(index) {
+            if (confirm("Möchtest du diese aufgezeichnete Runde wirklich löschen?")) {
+                state.history.splice(index, 1);
+                saveToStorage();
+                renderMainMenu();
+            }
+        }
+
+        function openHistoryDetail(index) {
+            const game = state.history[index];
+            if (!game) return;
+
+            document.getElementById('history-detail-title').textContent = `${game.script} - ${new Date(game.date).toLocaleDateString('de-DE')}`;
+            const content = document.getElementById('history-detail-content');
+
+            let playersHTML = game.players.map(p => `
+                <div class="p-2 border border-slate-800 rounded-lg bg-slate-950 flex items-center justify-between">
+                    <div>
+                        <span class="font-bold text-slate-100">${p.seat}: ${p.name}</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${p.claims.map(c => getRoleBadge(c)).join('')}
+                        </div>
+                    </div>
+                    <span class="text-[11px] ${p.status === 'alive' ? 'text-emerald-400 font-semibold' : 'text-slate-500'}">
+                        ${p.status === 'alive' ? 'Lebendig' : 'Tot (' + (p.deathTime || '') + ')'}
+                    </span>
+                </div>
+            `).join('');
+
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                        <span class="font-bold text-amber-300 block mb-1">Eigene Rolle:</span>
+                        <div>${getRoleBadge(game.myGameData?.actualRole || 'Unbekannt')}</div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-100 block mb-1">Spieleraufstellung & Claims:</span>
+                        <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                            ${playersHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-history-detail').classList.remove('hidden');
+        }
+
+        /* ==================== 7. GAME SETUP LOGIC ==================== */
+        function openSetupModal() {
+            generateSeatInputs();
+            document.getElementById('modal-setup').classList.remove('hidden');
+        }
+
+        function generateSeatInputs() {
+            const count = parseInt(document.getElementById('setup-player-count').value) || 7;
+            document.getElementById('total-players-label').textContent = count + 1;
+
+            const container = document.getElementById('setup-names-container');
+            container.innerHTML = '';
+
+            const selfDiv = document.createElement('div');
+            selfDiv.className = "flex items-center space-x-2 bg-slate-950 p-2 rounded-lg border border-slate-800 opacity-75";
+            selfDiv.innerHTML = `
+                <span class="w-16 font-bold text-xs text-slate-400">Pos 0 (Ich):</span>
+                <input type="text" value="Ich / Spieler 0" disabled class="flex-1 text-xs p-1.5 bg-transparent font-medium text-slate-300">
+            `;
+            container.appendChild(selfDiv);
+
+            for (let i = 1; i <= count; i++) {
+                const div = document.createElement('div');
+                div.className = "flex items-center space-x-2";
+                const labelText = i === 1 ? `Pos 1 (Links)` : (i === count ? `Pos ${i} (Rechts)` : `Pos ${i}`);
+                
+                div.innerHTML = `
+                    <span class="w-24 text-xs font-semibold text-slate-400">${labelText}:</span>
+                    <input type="text" id="setup-player-name-${i}" placeholder="Name Spieler ${i}" class="flex-1 text-xs p-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-100 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function startNewGame() {
+            const count = parseInt(document.getElementById('setup-player-count').value) || 7;
+            const script = document.getElementById('setup-script').value;
+
+            if (state.activeGame) {
+                state.history.unshift(state.activeGame);
+            }
+
+            const players = [];
+            players.push({
+                seat: 0,
+                name: 'Ich',
+                claims: [],
+                suspectedRole: '',
+                status: 'alive',
+                deathTime: '',
+                deathReason: '',
+                hasGhostVote: true,
+                abilityNotes: '',
+                generalNotes: ''
+            });
+
+            for (let i = 1; i <= count; i++) {
+                const input = document.getElementById(`setup-player-name-${i}`);
+                const name = input && input.value.trim() !== '' ? input.value.trim() : `Spieler ${i}`;
+                players.push({
+                    seat: i,
+                    name: name,
+                    claims: [],
+                    suspectedRole: '',
+                    status: 'alive',
+                    deathTime: '',
+                    deathReason: '',
+                    hasGhostVote: true,
+                    abilityNotes: '',
+                    generalNotes: ''
+                });
+            }
+
+            state.activeGame = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                script: script,
+                players: players,
+                myGameData: {
+                    actualRole: '',
+                    bluffs: ['', '', ''],
+                    strategyNotes: '',
+                    nightInfos: [{ night: 'Nacht 1', text: '' }]
+                },
+                worlds: []
+            };
+
+            saveToStorage();
+            closeModal('modal-setup');
+            setupFormPopulators();
+            switchTab('grimoire');
+        }
+
+        /* ==================== 8. GRIMOIRE RENDERING ==================== */
+        function setGrimoireView(mode) {
+            state.viewMode = mode;
+            const tableWrap = document.getElementById('grimoire-table-wrapper');
+            const circleWrap = document.getElementById('grimoire-circle-wrapper');
+            const btnTable = document.getElementById('btn-view-table');
+            const btnCircle = document.getElementById('btn-view-circle');
+
+            if (mode === 'table') {
+                tableWrap.classList.remove('hidden');
+                circleWrap.classList.add('hidden');
+                btnTable.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-100 bg-slate-800 shadow-sm";
+                btnCircle.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-400 hover:text-slate-200";
+            } else {
+                tableWrap.classList.add('hidden');
+                circleWrap.classList.remove('hidden');
+                btnCircle.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-100 bg-slate-800 shadow-sm";
+                btnTable.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-400 hover:text-slate-200";
+                renderCircleView();
+            }
+        }
+
+        function renderGrimoire() {
+            if (!state.activeGame) return;
+
+            if (state.viewMode === 'circle') {
+                renderCircleView();
+            }
+
+            const tbody = document.getElementById('grimoire-table-body');
+            tbody.innerHTML = '';
+
+            state.activeGame.players.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = p.status === 'dead' ? 'bg-slate-950/40 text-slate-500' : 'hover:bg-slate-800/40 transition';
+
+                const claimsHTML = p.claims.length > 0 
+                    ? p.claims.map(c => getRoleBadge(c)).join(' ')
+                    : '<span class="text-slate-600 text-xs italic">Keine</span>';
+
+                let statusHTML = '';
+                if (p.status === 'alive') {
+                    statusHTML = `<span class="inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800"><i class="fa-solid fa-heart mr-1 text-[10px]"></i> Lebendig</span>`;
+                } else {
+                    statusHTML = `
+                        <div class="space-y-0.5">
+                            <span class="inline-flex items-center text-xs font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                <i class="fa-solid fa-skull mr-1 text-[10px] text-slate-400"></i> Tot
+                            </span>
+                            <div class="text-[10px] text-slate-500 font-medium">${p.deathTime || ''} (${p.deathReason || 'Tot'})</div>
+                            ${p.hasGhostVote ? '<span class="inline-block text-[10px] text-amber-400 font-semibold bg-amber-500/10 px-1 rounded border border-amber-500/30">Stimmstein JA</span>' : '<span class="inline-block text-[10px] text-slate-600 line-through">Stimmstein</span>'}
+                        </div>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-bold text-xs text-slate-500">${p.seat}</td>
+                    <td class="p-3 font-semibold text-slate-200">
+                        ${p.name} ${p.seat === 0 ? '<span class="text-[10px] bg-slate-800 text-slate-300 px-1 rounded ml-1">Ich</span>' : ''}
+                    </td>
+                    <td class="p-3"><div class="flex flex-wrap gap-1">${claimsHTML}</div></td>
+                    <td class="p-3">${p.suspectedRole ? getRoleBadge(p.suspectedRole) : '<span class="text-slate-600 text-xs italic">-</span>'}</td>
+                    <td class="p-3">${statusHTML}</td>
+                    <td class="p-3 text-xs text-slate-300 whitespace-pre-wrap">${p.abilityNotes || '-'}</td>
+                    <td class="p-3 text-xs text-slate-400 whitespace-pre-wrap">${p.generalNotes || '-'}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="quickOpenAddInfoForPlayer(${p.seat})" class="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg transition" title="Info bearbeiten">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCircleView() {
+            const container = document.getElementById('circle-container');
+            container.innerHTML = '';
+
+            const players = state.activeGame.players;
+            const total = players.length;
+            const radius = 150;
+
+            players.forEach((p, index) => {
+                const angle = (index / total) * (2 * Math.PI) - (Math.PI / 2);
+                const x = Math.round(radius * Math.cos(angle));
+                const y = Math.round(radius * Math.sin(angle));
+
+                const seatNode = document.createElement('div');
+                seatNode.className = `absolute transform -translate-x-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-xl border shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:scale-105 w-24 sm:w-28 ${p.status === 'dead' ? 'bg-slate-950/80 border-slate-800 text-slate-500' : 'bg-slate-900 border-slate-800 text-slate-100'}`;
+                seatNode.style.left = `calc(50% + ${x}px)`;
+                seatNode.style.top = `calc(50% + ${y}px)`;
+                seatNode.onclick = () => quickOpenAddInfoForPlayer(p.seat);
+
+                const claimsBadges = p.claims.length > 0 
+                    ? p.claims.map(c => getRoleBadge(c)).join('')
+                    : '';
+
+                seatNode.innerHTML = `
+                    <span class="text-[10px] font-bold text-slate-500">Pos ${p.seat}</span>
+                    <span class="font-bold text-xs truncate max-w-full">${p.name}</span>
+                    <div class="mt-1 flex flex-wrap justify-center gap-0.5">${claimsBadges}</div>
+                    ${p.status === 'dead' ? '<i class="fa-solid fa-skull text-slate-600 mt-1 text-xs"></i>' : ''}
+                `;
+
+                container.appendChild(seatNode);
+            });
+        }
+
+        /* ==================== 9. SCHNELL-EINGABE MODAL (+ Neue Info) ==================== */
+        function setupFormPopulators() {
+            const suspectedSelect = document.getElementById('info-suspected-role');
+            const myActualSelect = document.getElementById('my-actual-role-select');
+            const bluff1 = document.getElementById('my-bluff-1');
+            const bluff2 = document.getElementById('my-bluff-2');
+            const bluff3 = document.getElementById('my-bluff-3');
+
+            const optionsHTML = ['<option value="">-- Keine / Rolle wählen --</option>']
+                .concat(getScriptRoles().map(r => `<option value="${r.name}">${r.name}</option>`))
+                .join('');
+
+            [suspectedSelect, myActualSelect, bluff1, bluff2, bluff3].forEach(el => {
+                if (el) el.innerHTML = optionsHTML;
+            });
+
+            if (state.activeGame) {
+                const targetSelect = document.getElementById('info-target-player');
+                targetSelect.innerHTML = state.activeGame.players.map(p => `<option value="${p.seat}">Pos ${p.seat}: ${p.name}</option>`).join('');
+                targetSelect.setAttribute('onchange', 'updateClaimCheckboxesForPlayer()');
+            }
+        }
+
+        function renderClaimCheckboxes(selectedClaims = []) {
+            const container = document.getElementById('claim-checkboxes-container');
+            container.innerHTML = '';
+
+            getScriptRoles().forEach(role => {
+                const isChecked = selectedClaims.includes(role.name);
+                const team = getRoleTeam(role.name);
+                const badgeStyle = getTeamBadgeStyle(team);
+
+                const label = document.createElement('label');
+                label.className = "flex items-center space-x-2 p-1 rounded hover:bg-slate-900/60 cursor-pointer text-xs";
+                label.innerHTML = `
+                    <input type="checkbox" value="${role.name}" ${isChecked ? 'checked' : ''} class="claim-checkbox rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500">
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${badgeStyle}">${role.name}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function updateClaimCheckboxesForPlayer() {
+            if (!state.activeGame) return;
+            const seat = parseInt(document.getElementById('info-target-player').value);
+            const player = state.activeGame.players.find(p => p.seat === seat);
+            if (player) {
+                renderClaimCheckboxes(player.claims);
+            }
+        }
+
+        function openAddInfoModal() {
+            setupFormPopulators();
+            document.getElementById('modal-add-info').classList.remove('hidden');
+            toggleInfoCategoryFields();
+            updateClaimCheckboxesForPlayer();
+        }
+
+        function quickOpenAddInfoForPlayer(seat) {
+            openAddInfoModal();
+            document.getElementById('info-target-player').value = seat;
+            updateClaimCheckboxesForPlayer();
+        }
+
+        function toggleInfoCategoryFields() {
+            const cat = document.getElementById('info-category').value;
+            document.getElementById('field-group-claim').classList.toggle('hidden', cat !== 'claim');
+            document.getElementById('field-group-suspected').classList.toggle('hidden', cat !== 'suspected');
+            document.getElementById('field-group-status').classList.toggle('hidden', cat !== 'status');
+            document.getElementById('field-group-text').classList.toggle('hidden', cat !== 'ability' && cat !== 'note');
+        }
+
+        function toggleDeathDetails() {
+            const isDead = document.querySelector('input[name="status-alive"]:checked').value === 'dead';
+            document.getElementById('death-details-box').classList.toggle('hidden', !isDead);
+        }
+
+        function saveInformation() {
+            if (!state.activeGame) return;
+
+            const seat = parseInt(document.getElementById('info-target-player').value);
+            const player = state.activeGame.players.find(p => p.seat === seat);
+            if (!player) return;
+
+            const cat = document.getElementById('info-category').value;
+
+            if (cat === 'claim') {
+                const checkedBoxes = document.querySelectorAll('.claim-checkbox:checked');
+                const selectedRoles = Array.from(checkedBoxes).map(cb => cb.value);
+                player.claims = selectedRoles;
+            } else if (cat === 'suspected') {
+                player.suspectedRole = document.getElementById('info-suspected-role').value;
+            } else if (cat === 'status') {
+                const statusVal = document.querySelector('input[name="status-alive"]:checked').value;
+                player.status = statusVal;
+                if (statusVal === 'dead') {
+                    player.deathTime = document.getElementById('info-death-time').value;
+                    player.deathReason = document.getElementById('info-death-reason').value;
+                    player.hasGhostVote = document.getElementById('info-ghost-vote').checked;
+                } else {
+                    player.deathTime = '';
+                    player.deathReason = '';
+                    player.hasGhostVote = true;
+                }
+            } else if (cat === 'ability') {
+                const txt = document.getElementById('info-text-input').value.trim();
+                if (txt) {
+                    player.abilityNotes = player.abilityNotes ? `${player.abilityNotes}\n${txt}` : txt;
+                }
+            } else if (cat === 'note') {
+                const txt = document.getElementById('info-text-input').value.trim();
+                if (txt) {
+                    player.generalNotes = player.generalNotes ? `${player.generalNotes}\n${txt}` : txt;
+                }
+            }
+
+            saveToStorage();
+            closeModal('modal-add-info');
+            renderGrimoire();
+            document.getElementById('info-text-input').value = '';
+        }
+
+        /* ==================== 10. MEIN SPIEL (PERSÖNLICHES DASHBOARD) ==================== */
+        function renderMyGameTab() {
+            if (!state.activeGame) return;
+
+            const myData = state.activeGame.myGameData || { actualRole: '', bluffs: ['', '', ''], strategyNotes: '', nightInfos: [] };
+
+            document.getElementById('my-actual-role-select').value = myData.actualRole || '';
+            document.getElementById('my-bluff-1').value = myData.bluffs[0] || '';
+            document.getElementById('my-bluff-2').value = myData.bluffs[1] || '';
+            document.getElementById('my-bluff-3').value = myData.bluffs[2] || '';
+            document.getElementById('my-strategy-notes').value = myData.strategyNotes || '';
+
+            renderRolePreview(myData.actualRole);
+            renderNightInfosList();
+        }
+
+        function renderRolePreview(roleName) {
+            const container = document.getElementById('my-role-card-preview');
+            if (!roleName) {
+                container.innerHTML = `<span class="text-slate-500 italic">Keine eigene Rolle ausgewählt.</span>`;
+                container.className = "p-3 rounded-lg border text-xs bg-slate-950 border-slate-800";
+                return;
+            }
+
+            const role = getScriptRoles().find(r => r.name === roleName);
+            if (!role) return;
+
+            const style = getTeamBadgeStyle(role.team);
+            container.className = `p-3 rounded-lg border text-xs ${style}`;
+            container.innerHTML = `
+                <div class="font-bold text-sm">${role.name}</div>
+                    ${role.ability ? `<p class="mt-1 leading-relaxed">${role.ability}</p>` : ''}
+            `;
+        }
+
+        function updateMyGameData() {
+            if (!state.activeGame) return;
+
+            const actualRole = document.getElementById('my-actual-role-select').value;
+            const b1 = document.getElementById('my-bluff-1').value;
+            const b2 = document.getElementById('my-bluff-2').value;
+            const b3 = document.getElementById('my-bluff-3').value;
+            const notes = document.getElementById('my-strategy-notes').value;
+
+            state.activeGame.myGameData.actualRole = actualRole;
+            state.activeGame.myGameData.bluffs = [b1, b2, b3];
+            state.activeGame.myGameData.strategyNotes = notes;
+
+            renderRolePreview(actualRole);
+            saveToStorage();
+        }
+
+        function renderNightInfosList() {
+            const list = document.getElementById('my-night-infos-list');
+            list.innerHTML = '';
+
+            const infos = state.activeGame.myGameData.nightInfos || [];
+
+            infos.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "p-3 border border-slate-800 rounded-lg bg-slate-950 space-y-2";
+                div.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-xs text-slate-300">${item.night}</span>
+                        <button onclick="removeNightInfoEntry(${index})" class="text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    <textarea oninput="updateNightInfoText(${index}, this.value)" rows="2" placeholder="Erhaltene Info z. B. Wascheweib: Spieler 1 oder 2 ist Detektiv..." class="w-full text-xs p-2 border border-slate-800 rounded bg-slate-900 text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500">${item.text || ''}</textarea>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addNightInfoEntry() {
+            if (!state.activeGame) return;
+            const infos = state.activeGame.myGameData.nightInfos;
+            const nightNum = infos.length + 1;
+            infos.push({ night: `Nacht ${nightNum}`, text: '' });
+            saveToStorage();
+            renderNightInfosList();
+        }
+
+        function removeNightInfoEntry(index) {
+            if (!state.activeGame) return;
+            state.activeGame.myGameData.nightInfos.splice(index, 1);
+            saveToStorage();
+            renderNightInfosList();
+        }
+
+        function updateNightInfoText(index, val) {
+            if (!state.activeGame) return;
+            state.activeGame.myGameData.nightInfos[index].text = val;
+            saveToStorage();
+        }
+
+        /* ==================== 11. WELTENBAU & LOGIK-ASSISTENT ==================== */
+        function renderHypothesesTab() {
+            if (!state.activeGame) return;
+
+            renderConflictFinder();
+            renderCadenceCheck();
+            renderWorldsList();
+        }
+
+        function renderConflictFinder() {
+            const container = document.getElementById('conflict-list');
+            container.innerHTML = '';
+
+            const claimMap = {};
+            state.activeGame.players.forEach(p => {
+                p.claims.forEach(c => {
+                    if (!claimMap[c]) claimMap[c] = [];
+                    claimMap[c].push(p.name);
+                });
+            });
+
+            const conflicts = Object.keys(claimMap).filter(role => claimMap[role].length > 1);
+
+            if (conflicts.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 italic">Keine doppelten Rollen-Claims entdeckt.</div>`;
+                return;
+            }
+
+            conflicts.forEach(role => {
+                const div = document.createElement('div');
+                div.className = "p-2 bg-rose-950/60 border border-rose-800/80 rounded-lg text-rose-200 flex items-center justify-between";
+                div.innerHTML = `
+                    <span><strong>Doppelter Claim:</strong> ${getRoleBadge(role)}</span>
+                    <span class="font-medium">${claimMap[role].join(' & ')}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderCadenceCheck() {
+            const container = document.getElementById('cadence-check-container');
+            container.innerHTML = '';
+
+            const total = state.activeGame.players.length;
+            const target = CADENCE_TABLE[total] || { townsfolk: 5, outsider: 0, minion: 1, demon: 1 };
+
+            const counts = { townsfolk: 0, outsider: 0, minion: 0, demon: 0 };
+            const claimedRoles = new Set();
+
+            state.activeGame.players.forEach(p => {
+                p.claims.forEach(c => {
+                    if (!claimedRoles.has(c)) {
+                        claimedRoles.add(c);
+                        const team = getRoleTeam(c);
+                        if (counts[team] !== undefined) counts[team]++;
+                    }
+                });
+            });
+
+            const categories = [
+                { key: 'townsfolk', label: 'Bürger', target: target.townsfolk, style: 'text-emerald-300 bg-emerald-950/50 border-emerald-800' },
+                { key: 'outsider', label: 'Außenseiter', target: target.outsider, style: 'text-sky-300 bg-sky-950/50 border-sky-800' },
+                { key: 'minion', label: 'Schergen', target: target.minion, style: 'text-rose-300 bg-rose-950/50 border-rose-800' },
+                { key: 'demon', label: 'Dämon', target: target.demon, style: 'text-purple-300 bg-purple-950/50 border-purple-800' }
+            ];
+
+            categories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = `p-2.5 rounded-lg border ${cat.style} flex flex-col justify-between`;
+                div.innerHTML = `
+                    <span class="font-bold">${cat.label}</span>
+                    <div class="text-sm font-extrabold mt-1">Geclaimt: ${counts[cat.key]} / Soll: ${cat.target}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderWorldsList() {
+            const container = document.getElementById('worlds-container');
+            container.innerHTML = '';
+
+            const worlds = state.activeGame.worlds || [];
+
+            if (worlds.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-6 text-center bg-slate-950 rounded-xl border border-slate-800 text-slate-500 text-xs">
+                        Noch keine Hypothesen/Welten angelegt. Klicke auf "+ Neue Welt", um ein Szenario zu erstellen.
+                    </div>
+                `;
+                return;
+            }
+
+            worlds.forEach((world, wIndex) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3";
+
+                let demonPlayerOptions = state.activeGame.players.map(p => 
+                    `<option value="${p.seat}" ${world.demonSeat === p.seat ? 'selected' : ''}>Pos ${p.seat}: ${p.name}</option>`
+                ).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <input type="text" value="${world.title || 'Welt ' + (wIndex+1)}" onchange="updateWorldTitle(${wIndex}, this.value)" class="font-bold text-sm text-slate-100 bg-transparent border-b border-dashed border-slate-700 focus:outline-none">
+                        <button onclick="removeWorld(${wIndex})" class="text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Vermuteter Dämon in dieser Welt:</label>
+                            <select onchange="updateWorldDemon(${wIndex}, this.value)" class="w-full text-xs p-1.5 border border-slate-700 rounded bg-slate-950 text-slate-100">
+                                <option value="">-- Dämon wählen --</option>
+                                ${demonPlayerOptions}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Szenario-Beschreibung & Theorie:</label>
+                            <textarea oninput="updateWorldText(${wIndex}, this.value)" rows="3" placeholder="Z. B. Falls Spieler 3 der Imp ist, muss Spieler 5 der Giftmischer sein..." class="w-full text-xs p-2 bg-slate-950 text-slate-100 border border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-amber-500">${world.text || ''}</textarea>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function createNewWorld() {
+            if (!state.activeGame) return;
+            if (!state.activeGame.worlds) state.activeGame.worlds = [];
+            const count = state.activeGame.worlds.length + 1;
+            state.activeGame.worlds.push({
+                title: `Welt ${String.fromCharCode(64 + count)} (z. B. Spieler ${count} ist Dämon)`,
+                demonSeat: '',
+                text: ''
+            });
+            saveToStorage();
+            renderWorldsList();
+        }
+
+        function removeWorld(index) {
+            if (!state.activeGame) return;
+            state.activeGame.worlds.splice(index, 1);
+            saveToStorage();
+            renderWorldsList();
+        }
+
+        function updateWorldTitle(index, val) {
+            if (!state.activeGame) return;
+            state.activeGame.worlds[index].title = val;
+            saveToStorage();
+        }
+
+        function updateWorldDemon(index, val) {
+            if (!state.activeGame) return;
+            state.activeGame.worlds[index].demonSeat = parseInt(val);
+            saveToStorage();
+        }
+
+        function updateWorldText(index, val) {
+            if (!state.activeGame) return;
+            state.activeGame.worlds[index].text = val;
+            saveToStorage();
+        }
+
+        /* ==================== 12. ROLLEN REFERENZLEISTE ==================== */
+        function renderRolesReference(filterTeam) {
+            const grid = document.getElementById('roles-reference-grid');
+            grid.innerHTML = '';
+
+            const scriptRoles = getScriptRoles();
+            const roles = filterTeam === 'all'
+                ? scriptRoles
+                : scriptRoles.filter(r => r.team === filterTeam);
+
+            roles.forEach(role => {
+                const card = document.createElement('div');
+                const style = getTeamBadgeStyle(role.team);
+
+                card.className = `p-4 rounded-xl border text-xs space-y-2 ${style}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm">${role.name}</span>
+                    </div>
+                    ${role.ability ? `<p class="leading-relaxed font-medium">${role.ability}</p>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterRoles(team) {
+            renderRolesReference(team);
+        }
+
+        /* ==================== UTILS ==================== */
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
