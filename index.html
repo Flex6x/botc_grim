@@ -333,20 +333,21 @@
                         <option value="Trouble Brewing">Trouble Brewing (Standard)</option>
                         <option value="A New Beginning">A New Beginning (Mark von Stoch)</option>
                         <option value="Everyone Can Play">Everyone Can Play (Ben Burns)</option>
+                        <option value="The Silent Minority">The Silent Minority (Steffen)</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Anzahl Mitspieler (ohne dich)</label>
-                    <input type="number" id="setup-player-count" min="5" max="15" value="7" onchange="generateSeatInputs()" class="w-full text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100 font-medium">
-                    <p class="text-[11px] text-slate-400 mt-1">Insgesamt <span id="total-players-label">8</span> Spieler inklusive dir selbst.</p>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Anzahl Spieler (inklusive dir)</label>
+                    <input type="number" id="setup-player-count" min="5" max="15" step="1" value="8" required onchange="generateSeatInputs()" class="w-full text-sm p-2.5 border border-slate-700 rounded-lg bg-slate-950 text-slate-100 font-medium">
+                    <p class="text-[11px] text-slate-400 mt-1">Insgesamt <span id="total-players-label">8</span> Spieler. Deinen eigenen Namen musst du nicht eintragen.</p>
                 </div>
 
                 <div class="space-y-2">
                     <label class="block text-xs font-semibold text-slate-300">Sitzordnung im Uhrzeigersinn</label>
                     <p class="text-xs text-amber-300 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
                         <i class="fa-solid fa-circle-info mr-1 text-amber-400"></i>
-                        Position 0 bist Du selbst. Trage die Namen der Mitspieler beginnend mit der Person <strong>links von dir</strong> im Uhrzeigersinn ein.
+                        Du bist automatisch Position 0. Trage nur die Namen der anderen Spieler ein, beginnend mit der Person <strong>links von dir</strong> im Uhrzeigersinn.
                     </p>
 
                     <div class="space-y-2 pt-1" id="setup-names-container">
@@ -512,14 +513,19 @@
         ];
 
         function createScriptRoles(roleGroups) {
-            return Object.entries(roleGroups).flatMap(([team, names]) => names.map(name =>
-                TROUBLE_BREWING.find(role => role.name === name) || {
-                    id: name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
-                    name,
+            return Object.entries(roleGroups).flatMap(([team, entries]) => entries.map(entry => {
+                const roleInfo = typeof entry === 'string' ? { name: entry } : entry;
+                const baseRole = TROUBLE_BREWING.find(role => role.name === roleInfo.name);
+
+                return {
+                    ...(baseRole || {
+                        id: roleInfo.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+                        name: roleInfo.name
+                    }),
                     team,
-                    ability: ''
-                }
-            ));
+                    ability: roleInfo.ability ?? baseRole?.ability ?? ''
+                };
+            }));
         }
 
         const SCRIPT_ROLES = {
@@ -535,6 +541,39 @@
                 outsider: ['Trunkenbold', 'Einsiedler', 'Heilige', 'Mondkind'],
                 minion: ['Baron', 'Giftmischer', 'Meuchelmörder', 'Teufelsadvokat', 'Spion', 'Scharlachrote Frau'],
                 demon: ['Imp']
+            }),
+            'The Silent Minority': createScriptRoles({
+                townsfolk: [
+                    { name: 'Schneiderin', ability: 'Einmal im Spiel, in der Nacht, wähle 2 Spieler (nicht dich selbst). Du erfährst, ob sie die gleiche Fraktion haben.' },
+                    { name: 'Uhrmacher', ability: 'Du weißt zu Beginn, wie viele Schritte es vom Dämon zum nächsten Schergen sind.' },
+                    { name: 'Bibliothekar', ability: 'Du weißt zu Beginn, dass 1 von 2 Spielern ein bestimmter Außenseiter ist. Oder dass keine Außenseiter mitspielen.' },
+                    { name: 'Wahrsagerin', ability: 'Wähle jede Nacht 2 Spieler. Du erfährst, ob 1 davon der Dämon ist. Es gibt 1 guten Spieler, der dir als Dämon erscheint.' },
+                    { name: 'Marktschreier', ability: 'Jede Nacht erfährst du, ob heute ein Scherge jemanden nominiert hat.' },
+                    { name: 'Orakel', ability: 'Jede Nacht erfährst du, wie viele tote Spieler böse sind.' },
+                    { name: 'Mönch', ability: 'Wähle jede Nacht 1 Spieler (nicht dich selbst). Er ist heute Nacht sicher vor dem Dämon.' },
+                    { name: 'Savant', ability: 'Jeden Tag darfst du den Erzähler besuchen, um geheim 2 Aussagen zu erfahren: 1 ist wahr und 1 ist falsch.' },
+                    { name: 'Philosoph', ability: 'Einmal im Spiel, in der Nacht, wähle 1 guten Charakter. Erhalte seine Fähigkeit. Falls der Charakter im Spiel ist, ist er betrunken.' },
+                    { name: 'Künstler', ability: 'Einmal im Spiel, während des Tages, stelle dem Erzähler geheim 1 beliebige Ja/Nein-Frage.' },
+                    { name: 'Dämonenjäger', ability: 'Einmal im Spiel, während des Tages, wähle öffentlich 1 Spieler. Falls er der Dämon ist, stirbt er.' },
+                    { name: 'Jongleur', ability: 'An deinem 1. Tag rate öffentlich den Charakter von bis zu 5 Spielern. In dieser Nacht erfährst du, wie viele davon korrekt waren.' },
+                    { name: 'Rabenhüter', ability: 'Falls du in der Nacht stirbst, wirst du aufgeweckt und wählst 1 Spieler. Du erfährst seinen Charakter.' }
+                ],
+                outsider: [
+                    { name: 'Trunkenbold', ability: 'Du weißt nicht, dass du der Trunkenbold bist. Du denkst, dass du ein Bürger-Charakter bist, aber das stimmt nicht.' },
+                    { name: 'Einsiedler', ability: 'Du erscheinst möglicherweise als böse, als Scherge oder Dämon, sogar wenn du tot bist.' },
+                    { name: 'Liebchen', ability: 'Wenn du stirbst, ist 1 Spieler ab jetzt betrunken.' },
+                    { name: 'Tollpatsch', ability: 'Wenn du erfährst, dass du gestorben bist, wähle öffentlich 1 lebendigen Spieler. Falls er böse ist, verliert dein Team.' }
+                ],
+                minion: [
+                    { name: 'Pate', ability: 'Du weißt zu Beginn, welche Außenseiter im Spiel sind. Falls 1 Außenseiter heute starb, wähle heute Nacht 1 Spieler. Er stirbt.' },
+                    { name: 'Giftmischer', ability: 'Wähle jede Nacht 1 Spieler. Er ist in dieser Nacht und am folgenden Tag vergiftet.' },
+                    { name: 'Spion', ability: 'Jede Nacht siehst du das Grimoire. Du erscheinst möglicherweise als gut und als Bürger oder Außenseiter, sogar wenn du tot bist.' },
+                    { name: 'Hexe', ability: 'Wähle jede Nacht 1 Spieler. Falls er morgen nominiert wird, stirbt er. Falls nur noch 3 Spieler leben, verlierst du diese Fähigkeit.' }
+                ],
+                demon: [
+                    { name: 'Imp', ability: 'Wähle jede Nacht 1 Spieler. Er stirbt. Falls du dich damit selbst tötest, wird ein Scherge zum Imp.' },
+                    { name: 'Fang Gu', ability: 'Wähle jede Nacht 1 Spieler. Er stirbt. Der 1. Außenseiter, der so stirbt, wird ein böser Fang Gu und du stirbst stattdessen.' }
+                ]
             })
         };
 
@@ -781,24 +820,18 @@
         }
 
         function generateSeatInputs() {
-            const count = parseInt(document.getElementById('setup-player-count').value) || 7;
-            document.getElementById('total-players-label').textContent = count + 1;
+            const playerCountInput = document.getElementById('setup-player-count');
+            const totalPlayers = Number(playerCountInput.value);
+            const count = Number.isInteger(totalPlayers) && totalPlayers >= 5 && totalPlayers <= 15 ? totalPlayers : 0;
+            document.getElementById('total-players-label').textContent = count || '–';
 
             const container = document.getElementById('setup-names-container');
             container.innerHTML = '';
 
-            const selfDiv = document.createElement('div');
-            selfDiv.className = "flex items-center space-x-2 bg-slate-950 p-2 rounded-lg border border-slate-800 opacity-75";
-            selfDiv.innerHTML = `
-                <span class="w-16 font-bold text-xs text-slate-400">Pos 0 (Ich):</span>
-                <input type="text" value="Ich / Spieler 0" disabled class="flex-1 text-xs p-1.5 bg-transparent font-medium text-slate-300">
-            `;
-            container.appendChild(selfDiv);
-
-            for (let i = 1; i <= count; i++) {
+            for (let i = 1; i < count; i++) {
                 const div = document.createElement('div');
                 div.className = "flex items-center space-x-2";
-                const labelText = i === 1 ? `Pos 1 (Links)` : (i === count ? `Pos ${i} (Rechts)` : `Pos ${i}`);
+                const labelText = i === 1 ? `Pos 1 (Links)` : (i === count - 1 ? `Pos ${i} (Rechts)` : `Pos ${i}`);
                 
                 div.innerHTML = `
                     <span class="w-24 text-xs font-semibold text-slate-400">${labelText}:</span>
@@ -809,7 +842,10 @@
         }
 
         function startNewGame() {
-            const count = parseInt(document.getElementById('setup-player-count').value) || 7;
+            const playerCountInput = document.getElementById('setup-player-count');
+            if (!playerCountInput.reportValidity()) return;
+
+            const count = Number(playerCountInput.value);
             const script = document.getElementById('setup-script').value;
 
             if (state.activeGame) {
@@ -830,7 +866,7 @@
                 generalNotes: ''
             });
 
-            for (let i = 1; i <= count; i++) {
+            for (let i = 1; i < count; i++) {
                 const input = document.getElementById(`setup-player-name-${i}`);
                 const name = input && input.value.trim() !== '' ? input.value.trim() : `Spieler ${i}`;
                 players.push({
